@@ -1,9 +1,10 @@
 Gene Multiplayer Management Game
-/*
-
-Game info goes here
-
-*/
+To play, push button on screen (placeholder for menu).
+When in game, drag items from left side to the top 2 crafting boxes to show in the punnet square.
+Look at different seed stats with the side buttons (this may change later in dev)
+Craft buton crafts items into the bottom craft box
+In the bottom right, you can change to farm view where you can plant seeds and buy farm plots (still in dev)
+You can also end turn in bottom right corner (not completed yet)
 
 TODO:
 Redo the printouts with stats (stats currently have no apparent meaning)
