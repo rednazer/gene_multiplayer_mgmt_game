@@ -5,13 +5,10 @@ Game info goes here
 
 */
 
-
-
 TODO:
-Add crafting functionality
-Add Farms <- sends seeds back to inventory
-Add Shop <- sends seeds back to inventory
-Add money system
-Add multiplayer framework
-
-Change visuals
+Redo the printouts with stats (stats currently have no apparent meaning)
+Add end turn with decrementing the farm counters. Check resistance vs season (also add season) and reduce yield from that
+Add multiplayer framework - features to include with this are sharing farmland (and maybe # crafts)
+Add popup visuals to replace Debug.Log comments to give player more information
+Balance money
+Give the game real visuals
