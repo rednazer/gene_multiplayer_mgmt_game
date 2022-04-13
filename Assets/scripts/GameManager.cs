@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
 using static managerHelper;
+using static Analytics;
 
 public class GameManager : MonoBehaviour {
 
@@ -30,11 +31,12 @@ public class GameManager : MonoBehaviour {
     public GameObject inventoryButtonPrefab;
     public GameObject layoutPrefab;
     public GameObject itemPrefab;
+    public GameObject farmPrefab;
     public List<Sprite> itemSprites;
 
     // Game layout squares
     public GameObject inventory;
-    public GameObject money;
+    public GameObject moneyBlock;
     public GameObject craftingInput;
     public GameObject square;
     public GameObject squareTrait;
@@ -52,9 +54,25 @@ public class GameManager : MonoBehaviour {
     public List<GameObject> items;
     public GameObject selectedItem;
     public const int INVENTORY_SIZE = 42;
+    public const int CRAFT_PRICE = 100;
 
     // Farm vars
+    public List<GameObject> farms;
+    public Sprite ownedSprite;
+    public Sprite unownedSprite;
     public const int FARM_SIZE = 20;
+
+    // Shop vars
+    GameObject popup;
+    int shopType; // shop types -> 0 = buy farm, 1 = buy greenhouse, 2 = buy random seed (maybe)
+    int craftPrice = 100;
+    const int FARM_PRICE = 100;
+    const int GREENHOUSE_PRICE = 100;
+
+    // Other
+    int money;
+    int screenView;
+    int turnNumber;
 
     private readonly (int, bool, int, bool)[] initSeeds = {
         (1, true, 1, false), // Bad trait
@@ -81,6 +99,13 @@ public class GameManager : MonoBehaviour {
 
     // Functionality on clicking inventory button
     public void inventoryButtonClick(GameObject obj) {
+        if(popup != null) {
+            Destroy(popup);
+            popup = null;
+            selectedItem = null;
+            return;
+        }
+
         if(selectedItem == null) { // Pick up item if there is one
             if (obj.transform.childCount != 0) {
                 selectedItem = obj;
@@ -117,8 +142,91 @@ public class GameManager : MonoBehaviour {
         updateSquare();
     }
 
+    public void farmButtonClick(GameObject obj) {
+        if(popup != null) {
+            Destroy(popup);
+            popup = null;
+            selectedItem = null;
+            return;
+        }
+        if (selectedItem == null) {
+            if (obj.transform.GetChild(0).GetComponent<farmInfo>().plotOwned) { // Unowned
+                if (!obj.transform.GetChild(0).GetComponent<farmInfo>().hasGreenhouse) {
+                    popup = createPopup(inventoryButtonPrefab, canvas, textPrefab, "buy greenhouse $100");
+                    popup.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().buyShopItem(); });
+                    shopType = 1;
+                    selectedItem = obj;
+                } else {
+                    Debug.Log("Greenhouse already owned"); // TODO: Replace with drifting text
+                }
+
+            } else {
+                // TODO: This can pop up shop page as well?
+                popup = createPopup(inventoryButtonPrefab, canvas, textPrefab, "buy plot $100");
+                popup.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().buyShopItem(); });
+                shopType = 0;
+                selectedItem = obj;
+            }
+        } else { // Plant seed
+            if (obj.transform.childCount > 1) {
+                // TODO: replace with popup
+                Debug.Log("Seed already planted here");
+            } else if (!obj.transform.GetChild(0).GetComponent<farmInfo>().plotOwned) {
+                Debug.Log("You do not own this plot");
+            } else { // Plants seed
+                GameObject child = selectedItem.transform.GetChild(0).gameObject;
+                child.transform.SetParent(obj.transform);
+                child.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 0, 0);
+                // TODO: Make planted seeds dissapear (transparent) and a seed planted visual (prolly on farm)
+                plantSeed(child, obj.transform.GetChild(0).gameObject);
+                Destroy(cursorFollower);
+                cursorFollower = null;
+                selectedItem = null;
+            }
+        }
+    }
+
+    // Uses seed values to determine growth time
+    public void plantSeed(GameObject seed, GameObject farm) {
+        // (res, grow, quantity)
+        (int, int, int) vals = seed.GetComponent<itemInfo>().getValues();
+
+        // Grow time is calculated to be turns = 5 - grow stat (1 turn ~ 3 months)
+        farm.GetComponent<farmInfo>().growTime = 5 - vals.Item2;
+    }
+
+    public void buyShopItem() {
+        if(shopType == 0) { // Buy farm plot
+            if(money < FARM_PRICE) {
+                Debug.Log("not enough money for purchase"); // TODO: replace with drifting text
+            } else {
+                setMoney(money - FARM_PRICE);
+                selectedItem.transform.GetChild(0).GetComponent<Image>().sprite = ownedSprite;
+                selectedItem.transform.GetChild(0).GetComponent<farmInfo>().plotOwned = true;
+            }
+        } else if(shopType == 1) { // Buy greenhouse on farm plot
+            if (money < GREENHOUSE_PRICE) {
+                Debug.Log("not enough money for purchase"); // TODO: replace with drifting text
+            } else {
+                setMoney(money - GREENHOUSE_PRICE);
+                selectedItem.transform.GetChild(0).GetComponent<farmInfo>().hasGreenhouse = true;
+                // TODO: Add greenhouse sprite
+            }
+        } else { // buy seed
+
+        }
+        Destroy(popup);
+        popup = null;
+        selectedItem = null;
+    }
+
     public void setTrait(int value) {
-        if(selectedItem != null) {
+        if(popup != null) {
+            Destroy(popup);
+            popup = null;
+            selectedItem = null;
+            return;
+        } else if (selectedItem != null) {
             Destroy(cursorFollower);
             cursorFollower = null;
             selectedItem = null;
@@ -129,12 +237,26 @@ public class GameManager : MonoBehaviour {
     }
 
     public void craftItem() {
-        if (selectedItem != null) {
+        if (popup != null) {
+            Destroy(popup);
+            popup = null;
+            selectedItem = null;
+            return;
+        } else if (selectedItem != null) {
             Destroy(cursorFollower);
             cursorFollower = null;
             selectedItem = null;
             return;
         }
+
+        // Charges money for seeds
+        if(money < CRAFT_PRICE) {
+            Debug.Log("Not enough money");
+            return;
+        } else {
+            setMoney(money - CRAFT_PRICE);
+        }
+
         // Use seeds from parents
         Transform child0 = craftingInput.transform.GetChild(0);
         Transform child1 = craftingInput.transform.GetChild(1);
@@ -152,7 +274,95 @@ public class GameManager : MonoBehaviour {
                 Debug.Log("A mutation occured"); // TODO: replace with something else to show a mutation occured
             }
             items.Add(item);
+
+            // Reports seed to analytics
+            ReportCraft("p1", item.GetComponent<itemInfo>().getValues(), turnNumber, money);
         }
+    }
+
+    public void switchCraftView() {
+        if (popup != null) {
+            Destroy(popup);
+            popup = null;
+            selectedItem = null;
+            return;
+        } else if (selectedItem != null) {
+            Destroy(cursorFollower);
+            cursorFollower = null;
+            selectedItem = null;
+            return;
+        }
+        if (screenView == 0) {
+            return;
+        }
+        screenView = 0;
+        // Enable crafting view things
+        craftingInput.SetActive(true);
+        square.SetActive(true);
+        squareTrait.SetActive(true);
+        craftingOutput.SetActive(true);
+
+    // Disable farm view
+        farm.SetActive(false);
+    }
+
+    public void switchFarmView() {
+        if (popup != null) {
+            Destroy(popup);
+            popup = null;
+            selectedItem = null;
+            return;
+        } else if (selectedItem != null) {
+            Destroy(cursorFollower);
+            cursorFollower = null;
+            selectedItem = null;
+            return;
+        }
+        if (screenView == 1) {
+            return;
+        }
+        screenView = 1;
+        // Enable farm view
+        farm.SetActive(true);
+
+        // Disable crafting view things
+        craftingInput.SetActive(false);
+        square.SetActive(false);
+        squareTrait.SetActive(false);
+        craftingOutput.SetActive(false);
+        
+    }
+   
+
+    private void setMoney(int value) {
+        money = value;
+        moneyBlock.transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().text = "$" + money;
+    }
+
+    public void endTurn() {
+        // TODO: Implement end of turn (prolly after making money)
+        turnNumber += 1;
+
+        // Report state to analytics
+        int maxVal = 0;
+        int numFarms = 0;
+        foreach(GameObject seed in items) {
+            (int, int, int) vals = seed.GetComponent<itemInfo>().getValues();
+            if(maxVal < vals.Item1 + vals.Item2 + vals.Item3) {
+                maxVal = vals.Item1 + vals.Item2 + vals.Item3;
+            }
+        }
+        foreach(GameObject farmPlot in farms) {
+            if(farmPlot.GetComponent<farmInfo>().plotOwned) {
+                numFarms += 1;
+            }
+        }
+        ReportPlayerState("p1", maxVal, turnNumber, money, numFarms);
+
+        // Check/decrease farms counters. If any at 0, harvest and set seed back in inventory
+
+        // Add money based on harvested crops
+
     }
 
     // Show seeds that are in the table
@@ -216,12 +426,14 @@ public class GameManager : MonoBehaviour {
         List<Transform> children = new List<Transform>();
         foreach(Transform child in canvas.transform) {
             children.Add(child);
-            
         }
         
         foreach(Transform child in children) {
             Destroy(child.gameObject);
         }
+
+        screenView = 0;
+        turnNumber = 1;
 
         // Add things to new scene
         buildGameScene();
@@ -232,9 +444,9 @@ public class GameManager : MonoBehaviour {
         inventory = Instantiate(layoutPrefab); // inventory
         inventory.name = "inventory";
         inventory.transform.SetParent(canvas.transform);
-        money = Instantiate(layoutPrefab); // money
-        money.name = "money";
-        money.transform.SetParent(canvas.transform);
+        moneyBlock = Instantiate(layoutPrefab); // money
+        moneyBlock.name = "moneyBlock";
+        moneyBlock.transform.SetParent(canvas.transform);
         craftingInput = Instantiate(layoutPrefab); // craftingInput
         craftingInput.name = "craftingInput";
         craftingInput.transform.SetParent(canvas.transform);
@@ -269,14 +481,14 @@ public class GameManager : MonoBehaviour {
         // Swap View
         layoutSetup(swapView, Mathf.FloorToInt(width * .5f), 0, Mathf.FloorToInt(height * .9f), 0);
         // Money
-        layoutSetup(money, Mathf.FloorToInt(width * .5f), 0, 0, Mathf.FloorToInt(height * .9f));
+        layoutSetup(moneyBlock, Mathf.FloorToInt(width * .5f), 0, 0, Mathf.FloorToInt(height * .9f));
         // Farm
         layoutSetup(farm, Mathf.FloorToInt(width * .5f), 0, Mathf.FloorToInt(height * .1f), Mathf.FloorToInt(height * .1f));
 
         // Adds additional constraints
         // inventory cell size -> x=160, y=154
         inventory.GetComponent<GridLayoutGroup>().cellSize = new Vector2(160, 154);
-        money.GetComponent<GridLayoutGroup>().cellSize = new Vector2(width/2, Mathf.FloorToInt(height * .1f));
+        moneyBlock.GetComponent<GridLayoutGroup>().cellSize = new Vector2(width/2, Mathf.FloorToInt(height * .1f));
         craftingInput.GetComponent<GridLayoutGroup>().cellSize = new Vector2(160, 154);
         square.GetComponent<GridLayoutGroup>().cellSize = new Vector2(160, 154);
         square.GetComponent<GridLayoutGroup>().constraint = GridLayoutGroup.Constraint.FixedColumnCount;
@@ -305,6 +517,7 @@ public class GameManager : MonoBehaviour {
             // TODO: Either make trash button, or add new button for trash/sell (maybe sell for a tiny amount)
             GameObject button = setupButton(inventoryButtonPrefab, inventory); // sets the parent to the inventory and the localScale to 1 (so it's not huge when it's made)
             button.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().inventoryButtonClick(button); });
+            
             button.name = "button" + i;
 
             // Build initial items to use and adds meta data
@@ -323,10 +536,10 @@ public class GameManager : MonoBehaviour {
 
     // TODO: Implement money setup
     private void moneySetup() {
-        GameObject button = setupButton(inventoryButtonPrefab, money); // sets the parent to the inventory and the localScale to 1 (so it's not huge when it's made)
+        GameObject button = setupButton(inventoryButtonPrefab, moneyBlock); // sets the parent to the inventory and the localScale to 1 (so it's not huge when it's made)
         button.name = "money";
-        GameObject moneyText = setupText(textPrefab, button, "money: 0");
-        
+        money = 400;
+        GameObject moneyText = setupText(textPrefab, button, "$"+money);
     }
 
     // Sets up each part of the crafting menu
@@ -378,26 +591,29 @@ public class GameManager : MonoBehaviour {
         doCraftButton.name = "doCraftButton";
         GameObject doCraftText1 = setupText(textPrefab, doCraftButton, "Craft Seed");
         doCraftButton.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().craftItem(); });
+
         GameObject craftButton2 = setupButton(inventoryButtonPrefab, craftingOutput); // sets the parent to the inventory and the localScale to 1 (so it's not huge when it's made)
         craftButton2.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().inventoryButtonClick(craftButton2); });
         craftButton2.name = "craftButton2";
-        craftButton2.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().inventoryButtonClick(craftButton2); });
-
     }
 
     private void swapViewSetup() {
         GameObject craftingView = setupButton(inventoryButtonPrefab, swapView); // sets the parent to the inventory and the localScale to 1 (so it's not huge when it's made)
         craftingView.name = "craftingView";
         GameObject craftingViewText = setupText(textPrefab, craftingView, "Crafting View");
+        craftingView.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().switchCraftView(); });
         // Here add functionality
         GameObject farmInventoryButton = setupButton(inventoryButtonPrefab, swapView); // sets the parent to the inventory and the localScale to 1 (so it's not huge when it's made)
         farmInventoryButton.name = "farmViewButton";
         GameObject farmInventoryText = setupText(textPrefab, farmInventoryButton, "Farm View");
+        farmInventoryButton.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().switchFarmView(); });
         // Here add functionality
         GameObject endTurnButton = setupButton(inventoryButtonPrefab, swapView); // sets the parent to the inventory and the localScale to 1 (so it's not huge when it's made)
         endTurnButton.name = "endTurnButton";
-        GameObject farmShopText = setupText(textPrefab, endTurnButton, "End Turn");
+        GameObject endTurnText = setupText(textPrefab, endTurnButton, "End Turn");
         // Here add functionality
+        endTurnButton.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().endTurn(); });
+        
     }
 
     // sets up the farm plots (yours and opponents) and hides it
@@ -406,18 +622,25 @@ public class GameManager : MonoBehaviour {
             // TODO: Make functionality for farms
             // Maybe make farms their own button
             GameObject button = setupButton(inventoryButtonPrefab, farm); // sets the parent to the inventory and the localScale to 1 (so it's not huge when it's made)
-            // button.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>(). });
+            button.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().farmButtonClick(button); });
+            // TODO: Add new sprites to farms to indicate unbought, bought, plated, greenhouse, etc.
             button.name = "farm" + i;
 
             // TODO: Build initial plots and add their meta data
-            if (i < 4) {
-                //GameObject item = setupItem(itemPrefab, button);
+            GameObject farmPlot = setupItem(farmPrefab, button);
+            if (i < 4) { // owned plots
+                farmPlot.GetComponent<Image>().sprite = ownedSprite;
+                farmPlot.GetComponent<farmInfo>().plotOwned = true;
+            } else { // Unowned plots
+                farmPlot.GetComponent<Image>().sprite = unownedSprite;
+                farmPlot.GetComponent<farmInfo>().plotOwned = false;
             }
+            farmPlot.GetComponent<farmInfo>().hasGreenhouse = false;
+            farmPlot.GetComponent<farmInfo>().growTime = -1;
+            farms.Add(farmPlot);
         }
-        //farm.SetActive(false);
+        farm.SetActive(false);
     }
-
-
 
     // Sets up the store (the store doesn't need setup. It will be a like a button)
     // fertilizer

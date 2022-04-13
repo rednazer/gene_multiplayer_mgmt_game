@@ -38,6 +38,25 @@ public class managerHelper : MonoBehaviour
         return obj;
     }
 
+    public static GameObject createPopup(GameObject objPrefab, GameObject parent, GameObject textPrefab, string text) {
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        GameObject obj = Instantiate(objPrefab, objPrefab.transform.position, objPrefab.transform.rotation);
+        obj.transform.SetParent(parent.transform);
+        obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
+        obj.GetComponent<RectTransform>().position = new Vector3(mousePos.x, mousePos.y, 0);
+        obj.GetComponent<RectTransform>().sizeDelta = new Vector2(160, 154);
+        obj.GetComponent<Image>().color = new Color(255, 255, 255, 230);
+
+        GameObject textObj = Instantiate(textPrefab, textPrefab.transform.position, textPrefab.transform.rotation);
+        textObj.transform.SetParent(obj.transform);
+        textObj.GetComponent<TextMeshProUGUI>().SetText(text);
+        textObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+        textObj.GetComponent<RectTransform>().sizeDelta = obj.GetComponent<RectTransform>().sizeDelta;
+        textObj.GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
+        textObj.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 0, 0);
+        return obj;
+    }
+
     public static (int, bool, int, bool) getItemInfo(Transform item, int trait) {
         (int, bool, int, bool) vals;
         if (trait == 0) {

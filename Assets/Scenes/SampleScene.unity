@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 519420032}
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
+  - component: {fileID: 519420033}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -207,6 +208,26 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &519420033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a160d838ff8b4b4693ac20007e008c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AssetsPPU: 100
+  m_RefResolutionX: 1920
+  m_RefResolutionY: 1080
+  m_UpscaleRT: 0
+  m_PixelSnapping: 0
+  m_CropFrameX: 0
+  m_CropFrameY: 0
+  m_StretchFill: 0
 --- !u!1 &801785298 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5098893374399731018, guid: f722a165342f2cf42bc6ef89092bbbe4, type: 3}
@@ -643,6 +664,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1995294101901445085, guid: 9534a77566c53b74f9cf0c60968768d7, type: 3}
     - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
+      propertyPath: farmPrefab
+      value: 
+      objectReference: {fileID: 409056259084235104, guid: 6bbede0ef9618c148bf0b60df8419d9d, type: 3}
+    - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
       propertyPath: itemPrefab
       value: 
       objectReference: {fileID: 6889557956634890971, guid: bcce85dda5ef75042bd16584d37905c1, type: 3}
@@ -651,6 +676,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 3804183828130808148, guid: bc46857ddf1e6ff4c880c6f83fbcd7da, type: 3}
     - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
+      propertyPath: ownedSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: ead41891066e0a241b443ae6115245d7, type: 3}
+    - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
       propertyPath: buttonPrefab
       value: 
       objectReference: {fileID: 9151865807274665629, guid: 07f36d607926e5b46b1e7c54e4bb009e, type: 3}
@@ -658,6 +687,10 @@ PrefabInstance:
       propertyPath: layoutPrefab
       value: 
       objectReference: {fileID: 666519712943422088, guid: 1944933a25ffaa844bd83f23d848ce81, type: 3}
+    - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
+      propertyPath: unownedSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 3caaeb6e2ef97ac4ba10ebd92714a2a6, type: 3}
     - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
       propertyPath: startButtonPrefab
       value: 

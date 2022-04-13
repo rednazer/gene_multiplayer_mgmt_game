@@ -1,0 +1,6 @@
+{"version":"0.0.6","datetime":"2022-04-13 13:22:35","epoch":1649874155806.0,"eventKey":"CRAFT","eventValue":"PlayerEvent","userId":"p1","bestSeedValue":0,"seedValue":5,"turn":1,"farms":0,"money":0}
+{"version":"0.0.6","datetime":"2022-04-13 13:24:47","epoch":1649874287791.0,"eventKey":"CRAFT","eventValue":"PlayerEvent","userId":"p1","bestSeedValue":0,"seedValue":6,"turn":1,"farms":0,"money":0}
+{"version":"0.0.6","datetime":"2022-04-13 13:24:54","epoch":1649874294607.0,"eventKey":"CRAFT","eventValue":"PlayerEvent","userId":"p1","bestSeedValue":0,"seedValue":7,"turn":1,"farms":0,"money":0}
+{"version":"0.0.6","datetime":"2022-04-13 13:25:12","epoch":1649874312519.0,"eventKey":"CRAFT","eventValue":"PlayerEvent","userId":"p1","bestSeedValue":0,"seedValue":4,"turn":1,"farms":0,"money":0}
+{"version":"0.0.6","datetime":"2022-04-13 13:25:18","epoch":1649874318681.0,"eventKey":"CRAFT","eventValue":"PlayerEvent","userId":"p1","bestSeedValue":0,"seedValue":7,"turn":1,"farms":0,"money":0}
+{"version":"0.0.6","datetime":"2022-04-13 13:27:15","epoch":1649874435214.0,"eventKey":"STATE","eventValue":"KeyFrame","userId":"p1","bestSeedValue":6,"seedValue":0,"turn":2,"farms":4,"money":0}
