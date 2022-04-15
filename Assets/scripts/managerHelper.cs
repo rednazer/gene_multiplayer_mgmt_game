@@ -57,6 +57,15 @@ public class managerHelper : MonoBehaviour
         return obj;
     }
 
+    public static GameObject createPrintText(GameObject objPrefab, GameObject parent, string text) {
+        GameObject obj = Instantiate(objPrefab, objPrefab.transform.position, objPrefab.transform.rotation);
+        obj.transform.SetParent(parent.transform, true);
+        obj.GetComponent<TextMeshProUGUI>().SetText(text);
+        obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
+        obj.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
+        return obj;
+    }
+
     public static (int, bool, int, bool) getItemInfo(Transform item, int trait) {
         (int, bool, int, bool) vals;
         if (trait == 0) {
