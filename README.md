@@ -7,9 +7,10 @@ In the bottom right, you can change to farm view where you can plant seeds and b
 You can also end turn in bottom right corner (not completed yet)
 
 TODO:
-Redo the printouts with stats (stats currently have no apparent meaning)
-Add end turn with decrementing the farm counters. Check resistance vs season (also add season) and reduce yield from that
-Add multiplayer framework - features to include with this are sharing farmland (and maybe # crafts)
-Add popup visuals to replace Debug.Log comments to give player more information
-Balance money
-Give the game real visuals
+	Possibly remove resistance as a stat (only grow rate/quantity)
+	Redo the printouts with stats (stats currently have no apparent meaning)
+X	Add end turn with decrementing the farm counters. Check resistance vs season (also add season) and reduce yield from that
+	Add multiplayer framework - features to include with this are sharing farmland (and maybe # crafts)
+X	Add popup visuals to replace Debug.Log comments to give player more information
+	Balance money
+	Give the game real visuals
