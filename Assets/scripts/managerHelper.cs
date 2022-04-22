@@ -66,67 +66,61 @@ public class managerHelper : MonoBehaviour
         return obj;
     }
 
-    public static (int, bool, int, bool) getItemInfo(Transform item, int trait) {
-        (int, bool, int, bool) vals;
+    public static (int, int) getItemInfo(Transform item, int trait) {
+        (int, int) vals;
         if (trait == 0) {
-            vals = item.GetComponent<itemInfo>().quantity;
+            vals = item.GetComponent<itemInfo>().petalColor;
         } else if (trait == 1) {
-            vals = item.GetComponent<itemInfo>().growRate;
+            vals = item.GetComponent<itemInfo>().flowerHeight;
         } else {
-            vals = item.GetComponent<itemInfo>().resistance;
+            vals = item.GetComponent<itemInfo>().growQuality;
         }
         return vals;
     }
 
-    public static string getItemsTable(int vals0, bool valsDom0, int vals1, bool valsDom1, int trait) {
+    public static string getItemsTable(int vals0, int vals1, int trait) {
         string retString;
         if (trait == 0) {
-            if (valsDom0 && valsDom1) {
-                retString = "QQ (" + ((vals0 + vals1) / 2) + ")";
-            } else if (valsDom0) {
-                retString = "Qq (" + vals0 + ")";
-            } else if (valsDom1) {
-                retString = "Qq (" + vals1 + ")";
+            if (vals0==0 && vals1==0) {
+                retString = "RR (red)";
+            } else if (vals0 == 0 || vals1 == 0) {
+                retString = "Rr (pink)";
             } else { // valsDom0 != true && valsDom1 != true
-                retString = "qq (" + ((vals0 + vals1) / 2) + ")";
+                retString = "rr (white)";
             }
         } else if (trait == 1) {
-            if (valsDom0 && valsDom1) {
-                retString = "GG (" + ((vals0 + vals1) / 2) + ")";
-            } else if (valsDom0) {
-                retString = "Gg (" + vals0 + ")";
-            } else if (valsDom1) {
-                retString = "Gg (" + vals1 + ")";
-            } else { // valsDom0 != true && valsDom1 != true
-                retString = "gg (" + ((vals0 + vals1) / 2) + ")";
+            if (vals0 == 0 && vals1 == 0) {
+                retString = "TT (tall)";
+            } else if (vals0 == 0 || vals1 == 0) {
+                retString = "Tt (tall)";
+            } else { // vals0 != 0 && vals1 != 0
+                retString = "tt (short)";
             }
         } else {
-            if (valsDom0 && valsDom1) {
-                retString = "RR (" + ((vals0 + vals1) / 2) + ")";
-            } else if (valsDom0) {
-                retString = "Rr (" + vals0 + ")";
-            } else if (valsDom1) {
-                retString = "Rr (" + vals1 + ")";
+            if (vals0 == 0 && vals1 == 0) {
+                retString = "QQ (growth)"; // fast growth
+            } else if (vals0 == 0 || vals1 == 0) {
+                retString = "Qq (mixed)"; // mixed yield/growth
             } else { // valsDom0 != true && valsDom1 != true
-                retString = "rr (" + ((vals0 + vals1) / 2) + ")";
+                retString = "qq (yield)"; // high yield
             }
         }
         return retString;
     }
 
-    public static (string, string) getReadableItemFormat((int, bool, int, bool) vals, int trait) {
+    public static (string, string) getReadableItemFormat((int, int) vals, int trait) {
         // True on the bools represents a dominant gene
         string str0;
         string str1;
         if (trait == 0) {
-            if (vals.Item2) { str0 = "Q (" + vals.Item1 + ")"; } else { str0 = "q (" + vals.Item1 + ")"; }
-            if (vals.Item4) { str1 = "Q (" + vals.Item3 + ")"; } else { str1 = "q (" + vals.Item3 + ")"; }
+            if (vals.Item1==0) { str0 = "R"; } else { str0 = "r"; }
+            if (vals.Item2==0) { str1 = "R"; } else { str1 = "r"; }
         } else if (trait == 1) {
-            if (vals.Item2) { str0 = "G (" + vals.Item1 + ")"; } else { str0 = "g (" + vals.Item1 + ")"; }
-            if (vals.Item4) { str1 = "G (" + vals.Item3 + ")"; } else { str1 = "g (" + vals.Item3 + ")"; }
+            if (vals.Item1==0) { str0 = "T"; } else { str0 = "t"; }
+            if (vals.Item2==0) { str1 = "T"; } else { str1 = "t"; }
         } else {
-            if (vals.Item2) { str0 = "R (" + vals.Item1 + ")"; } else { str0 = "r (" + vals.Item1 + ")"; }
-            if (vals.Item4) { str1 = "R (" + vals.Item3 + ")"; } else { str1 = "r (" + vals.Item3 + ")"; }
+            if (vals.Item1==0) { str0 = "Q"; } else { str0 = "q"; }
+            if (vals.Item2==0) { str1 = "Q"; } else { str1 = "q"; }
         }
         return (str0, str1);
     }

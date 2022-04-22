@@ -10,146 +10,146 @@ public class itemInfo : MonoBehaviour
     // These are used when deciding how to breed and how useful they are
     // Trait1 and Trait2 are the two different traits gotten from parents
     // (Trait1, T1 dominant?, Trait2, T2 dominant?)
-    public (int, bool, int, bool) quantity; // Higher = more once grown
-    public (int, bool, int, bool) growRate; // Higher = faster grow rate (something like 5 - score)?
-    public (int, bool, int, bool) resistance; // Higher = better resist
+    //public (int, bool, int, bool) quantity; // Higher = more once grown
+    //public (int, bool, int, bool) growRate; // Higher = faster grow rate (something like 5 - score)?
+    //public (int, bool, int, bool) resistance; // Higher = better resist
 
-    public bool createNewSeed(GameObject p0, GameObject p1) {
+    // New Traits
+    // colors:  0: R - red - codominant w/ white
+    //          1: r - white - codominant w/ red
+    //          (if one parent red and other white, makes pink color)
+    // height:  0: T - tall - dominant to short flower
+    //          1: t - short - recessive to tall flowers
+    // growQual 0: Q - fast grow speed (codiminant with high quantity)
+    //          1: q - high quantity (codiminant)
+    public (int, int) petalColor;
+    public (int, int) flowerHeight;
+    public (int, int) growQuality;
+
+    public void createNewSeed(GameObject p0, GameObject p1) {
         itemInfo info0 = p0.GetComponent<itemInfo>();
         itemInfo info1 = p1.GetComponent<itemInfo>();
-        generation = Mathf.RoundToInt(Mathf.Max(info0.generation, info1.generation));
+        generation = Mathf.RoundToInt(Mathf.Max(info0.generation, info1.generation)) + 1;
 
         // Sets values
-        return setAllValues(info0, info1);
+        setAllValues(info0, info1);
     }
 
-    private bool setAllValues(itemInfo info0, itemInfo info1) {
-        bool qMut, gMut, rMut;
-        // Set quantity
-        (quantity.Item1, quantity.Item2, quantity.Item3, quantity.Item4, qMut) = getChildValue(info0.quantity, info1.quantity);
-        // Set Grow rate
-        (growRate.Item1, growRate.Item2, growRate.Item3, growRate.Item4, gMut) = getChildValue(info0.growRate, info1.growRate);
-        // Set Resistance
-        (resistance.Item1, resistance.Item2, resistance.Item3, resistance.Item4, rMut) = getChildValue(info0.resistance, info1.resistance);
+    private void setAllValues(itemInfo info0, itemInfo info1) {
+        // Set petal color
+        petalColor = getChildValue(info0.petalColor, info1.petalColor);
 
-        // Cap grow rate at 1 turn
-        if(growRate.Item1 >= 5) {
-            growRate.Item1 = 4;
-        }
-        if(growRate.Item3 >= 5) {
-            growRate.Item3 = 4;
-        }
-
-        return (qMut || gMut || rMut);
+        // Set height
+        flowerHeight = getChildValue(info0.flowerHeight, info1.flowerHeight);
+        
+        // Set the type of growth
+        growQuality = getChildValue(info0.growQuality, info1.growQuality);
     }
+
+    static int zeros = 0;
+    static int ones = 0;
+    static int twos = 0;
+    static int threes = 0;
 
     // Takes in parents' seeds' info and gives back the components to use
     // Also has chance to mutate
-    private (int, bool, int, bool, bool) getChildValue((int, bool, int, bool) info0, (int, bool, int, bool) info1) {
+    private (int, int) getChildValue((int, int) info0, (int, int) info1) {
+        // Gets a random number from 0-3 to choose parent traits
         int RNG = Mathf.FloorToInt(Random.Range(0, 4));
-        (int, bool, int, bool, bool) returnInfo;
+        (int, int) returnInfo;
+        
         // Decides parent info to use
-        if (RNG == 0) {
+        if (RNG == 0) { // 00
             returnInfo.Item1 = info0.Item1;
-            returnInfo.Item2 = info0.Item2;
-            returnInfo.Item3 = info1.Item1;
-            returnInfo.Item4 = info1.Item2;
-        } else if(RNG == 1) {
+            returnInfo.Item2 = info1.Item1;
+            zeros++;
+        } else if(RNG == 1) { // 01
             returnInfo.Item1 = info0.Item1;
-            returnInfo.Item2 = info0.Item2;
-            returnInfo.Item3 = info1.Item3;
-            returnInfo.Item4 = info1.Item4;
-        } else if(RNG == 2) {
-            returnInfo.Item1 = info0.Item3;
-            returnInfo.Item2 = info0.Item4;
-            returnInfo.Item3 = info1.Item1;
-            returnInfo.Item4 = info1.Item2;
-        } else {
-            returnInfo.Item1 = info0.Item3;
-            returnInfo.Item2 = info0.Item4;
-            returnInfo.Item3 = info1.Item3;
-            returnInfo.Item4 = info1.Item4;
+            returnInfo.Item2 = info1.Item2;
+            ones++;
+        } else if(RNG == 2) { // 10
+            returnInfo.Item1 = info0.Item2;
+            returnInfo.Item2 = info1.Item1;
+            twos++;
+        } else { // 11
+            returnInfo.Item1 = info0.Item2;
+            returnInfo.Item2 = info1.Item2;
+            threes++;
         }
 
-        // We want around 50% overall, so .2^3 ~ .5
-        // There are 6 ways to mutate (I will have bias towards good mutations)
-        // int0: up: 0-1, down: 2
-        // int1: up 3-4, down: 5
-        // dom0: 6
-        // dom1: 7
-        // No mutation: 8-39 (around 5x the likelyhood of mutation)
-        returnInfo.Item5 = true;
-        int mutationRNG = Mathf.FloorToInt(Random.Range(0, 40));
-        if(mutationRNG == 0 || mutationRNG == 1) {
-            returnInfo.Item1 += 1;
-        } else if(mutationRNG == 2) {
-            if (returnInfo.Item1 > 1) {
-                returnInfo.Item1 -= 1;
-            }
-        } else if(mutationRNG == 3 || mutationRNG == 4) {
-            returnInfo.Item3 += 1;
-        } else if(mutationRNG == 5) {
-            if (returnInfo.Item3 > 1) {
-                returnInfo.Item3 -= 1;
-            }
-        } else if(mutationRNG == 6) {
-            returnInfo.Item2 = !returnInfo.Item2;
-        } else if(mutationRNG == 7) {
-            returnInfo.Item4 = !returnInfo.Item4;
-        } else {
-            returnInfo.Item5 = false;
-        }
+        // Testing to make sure I'm not doing dumb things
+        // Debug.Log("0:"+zeros+" 1:"+ones+" 2:"+twos+" 3:"+threes);
 
         return returnInfo;
     }
 
-
-    public void setResistance(int p1, bool dom1, int p2, bool dom2) {
-        resistance = (p1, dom1, p2, dom2);
+    // Grow speeds: fast = 1 turn, mid = 2 turn, slow = 3 turn
+    public int growSpeed() {
+        if (growQuality.Item1 == 0 && growQuality.Item2 == 0) {
+            return 1;
+        } else if (growQuality.Item1 == 0 || growQuality.Item2 == 0) {
+            return 2;
+        } else {
+            return 3;
+        }
     }
 
-    public void setGrowthRate(int p1, bool dom1, int p2, bool dom2) {
-        growRate = (p1, dom1, p2, dom2);
+    // Grow quantities: fast = 1, mid = 3, slow = 5
+    public int growQuantity() {
+        if (growQuality.Item1 == 0 && growQuality.Item2 == 0) { // fast growth low yield
+            return 1;
+        } else if (growQuality.Item1 == 0 || growQuality.Item2 == 0) {
+            return 3;
+        } else { // slow growth high yield
+            return 5;
+        }
     }
 
-    public void setQuantity(int p1, bool dom1, int p2, bool dom2) {
-        quantity = (p1, dom1, p2, dom2);
+    public (int,int,int) getValues() {
+        (int,int,int) values;
+        //0=red,1=pink,2=white
+        values.Item1 = (petalColor.Item1 == 0 && petalColor.Item2 == 0) ? (0) : ((petalColor.Item1 == 0 || petalColor.Item2 == 0) ? (1) : (2));
+        //0=tall,1=short
+        values.Item2 = (flowerHeight.Item1 == 0 || flowerHeight.Item2 == 0) ? (0) : (1);
+        //0=fast,1=mixed speed/yield,2=high yield
+        values.Item3 = (growQuality.Item1 == 0 && growQuality.Item2 == 0) ? (0) : ((growQuality.Item1 == 0 || growQuality.Item2 == 0) ? (1) : (2));
+
+        return values;
     }
 
-    public (int, int, int) getValues() {
-        int resVal = 0;
-        int growVal = 0;
-        int quantityVal = 0;
+    public (string, string, string) getStrings() {
+        string color;
+        string height;
+        string growSpeed;
 
-        // For resistance
-        if(resistance.Item2 == resistance.Item4) {
-            resVal = (resistance.Item1 + resistance.Item3) / 2;
-        } else if(resistance.Item2) {
-            resVal = resistance.Item1;
-        } else { // resistance.Item4
-            resVal = resistance.Item3;
+        // If both parents are red
+        if(petalColor.Item1 == 0 && petalColor.Item2 == 0) {
+            color = "red (RR)";
+        // If 1 parent is red
+        } else if(petalColor.Item1 == 0 || petalColor.Item2 == 0) {
+            color = "pink (Rr)";
+        } else { // if no parents are red
+            color = "white (rr)";
         }
 
-        // For grow rate
-        if (growRate.Item2 == growRate.Item4) {
-            growVal = (growRate.Item1 + growRate.Item3) / 2;
-        } else if (growRate.Item2) {
-            growVal = growRate.Item1;
-        } else { // resistance.Item4
-            growVal = growRate.Item3;
+        // If 1 or more parents are tall, then flower is tall
+        if (flowerHeight.Item1 == 0 && flowerHeight.Item2 == 0) {
+            height = "tall (TT)";
+        } else if (flowerHeight.Item1 == 0 || flowerHeight.Item2 == 0) {
+            height = "tall (Tt)";
+        } else {
+            height = "short (tt)";
         }
 
-        // For quantity
-        if (quantity.Item2 == quantity.Item4) {
-            quantityVal = (quantity.Item1 + quantity.Item3) / 2;
-        } else if (quantity.Item2) {
-            quantityVal = quantity.Item1;
-        } else { // resistance.Item4
-            quantityVal = quantity.Item3;
+        if(growQuality.Item1 == 0 && growQuality.Item2 == 0) {
+            growSpeed = "fast growth (QQ)";
+        } else if(growQuality.Item1 == 0 || growQuality.Item2 == 0) {
+            growSpeed = "mixed yield/growth (Qq)";
+        } else {
+            growSpeed = "high yield (qq)";
         }
 
-        // Returns gotten vals
-        return (resVal, growVal, quantityVal);
+        return (color, height, growSpeed);
     }
 
 }

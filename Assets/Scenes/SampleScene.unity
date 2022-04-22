@@ -710,6 +710,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 9151865807274665629, guid: 07f36d607926e5b46b1e7c54e4bb009e, type: 3}
     - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
+      propertyPath: flowerPrefab
+      value: 
+      objectReference: {fileID: 319890195833465437, guid: 298322d48c5d0bf4399aed5fee6a4068, type: 3}
+    - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
       propertyPath: layoutPrefab
       value: 
       objectReference: {fileID: 666519712943422088, guid: 1944933a25ffaa844bd83f23d848ce81, type: 3}

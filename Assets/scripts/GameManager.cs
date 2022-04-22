@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour {
     public GameObject inventoryButtonPrefab;
     public GameObject layoutPrefab;
     public GameObject itemPrefab;
+    public GameObject flowerPrefab;
     public GameObject farmPrefab;
     public List<Sprite> itemSprites;
 
@@ -51,7 +52,7 @@ public class GameManager : MonoBehaviour {
     GameObject hoverCursor;
 
     // Square variables
-    int trait = 0; // 0 = quantity, 1 = grow rate, 2 = resistance
+    int trait = 0; // 0 = color, 1 = height, 2 = fast/plentiful
     
     // Item variables
     public List<GameObject> items;
@@ -61,6 +62,7 @@ public class GameManager : MonoBehaviour {
 
     // Farm vars
     public List<GameObject> farms;
+    public int plantedItems = 0;
     public Sprite ownedSprite;
     public Sprite unownedSprite;
     public Sprite plantedSprite;
@@ -69,7 +71,9 @@ public class GameManager : MonoBehaviour {
     // Shop vars
     GameObject popup;
     int shopType; // shop types -> 0 = buy farm, 1 = buy greenhouse, 2 = buy random seed (maybe)
-    int craftPrice = 100;
+    int craftPrice = BASE_CRAFT_PRICE;
+    const int BASE_CRAFT_PRICE = 0;
+    const int CRAFT_PRICE_INCREASE = 0;
     const int FARM_PRICE = 100;
     const int GREENHOUSE_PRICE = 100;
 
@@ -78,11 +82,10 @@ public class GameManager : MonoBehaviour {
     int screenView;
     int turnNumber;
 
-    private readonly (int, bool, int, bool)[] initSeeds = {
-        (1, true, 1, false), // Bad trait
-        (2, true, 2, false), // Badish trait
-        (3, true, 1, false), // Good trait
-        //(3, true, 2, false) // Great trait
+    private readonly (int, int)[] initSeeds = {
+        (0, 0), // dominant traits
+        (0, 1), // mixed traits
+        (1, 1), // non-dominant traits
     };
 
 
@@ -148,18 +151,28 @@ public class GameManager : MonoBehaviour {
                                         yOffset = -1;
                                     }
                                     if (i % 6 == 0) {
-                                        xOffset = 2;
+                                        xOffset = 3;
+                                    } else if(i % 6 == 1) {
+                                        xOffset = 1;
                                     }
                                     break;
                                 }
                             }
                         }
-                        (int,int,int) vals = resTran.GetChild(0).GetComponent<itemInfo>().getValues();
-                        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                        hoverCursor.SetActive(true);
-                        string text = "R: " + vals.Item1 + " GR: " + vals.Item2 + " Q: " + vals.Item3;
-                        hoverCursor.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = text;
-                        hoverCursor.GetComponent<RectTransform>().position = new Vector3(mousePos.x + xOffset, mousePos.y + yOffset, 0);
+                        if (resTran.GetChild(0).GetComponent<itemInfo>()) {
+                            (string, string, string) vals = resTran.GetChild(0).GetComponent<itemInfo>().getStrings();
+                            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                            hoverCursor.SetActive(true); // TODO: fix formatting of popup text
+                            string text = "Color: " + vals.Item1 + "\nHeight: " + vals.Item2 + "\nQuality: " + vals.Item3;
+                            hoverCursor.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = text;
+                            hoverCursor.GetComponent<RectTransform>().position = new Vector3(mousePos.x + xOffset, mousePos.y + yOffset, 0);
+                        } else if(resTran.GetChild(0).GetComponent<flowerInfo>()) {
+                            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                            hoverCursor.SetActive(true); // TODO: fix formatting of popup text
+                            string text = resTran.GetChild(0).GetComponent<flowerInfo>().itemInfo();
+                            hoverCursor.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = text;
+                            hoverCursor.GetComponent<RectTransform>().position = new Vector3(mousePos.x + xOffset, mousePos.y + yOffset, 0);
+                        }
                         
                     }
                 } else if(resTran.parent.name == farm.name) {
@@ -265,6 +278,10 @@ public class GameManager : MonoBehaviour {
                 Debug.Log("You do not own this plot");
                 createPrintText(printPrefab, canvas, "You do not own this plot.");
             } else { // Plants seed
+                if (!isInvSpace()) {
+                    return;
+                }
+                plantedItems += 1;
                 GameObject child = selectedItem.transform.GetChild(0).gameObject;
                 child.transform.SetParent(obj.transform);
                 child.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 0, 0);
@@ -280,10 +297,10 @@ public class GameManager : MonoBehaviour {
     // Uses seed values to determine growth time
     public void plantSeed(GameObject seed, GameObject farm) {
         // (res, grow, quantity)
-        (int, int, int) vals = seed.GetComponent<itemInfo>().getValues();
+        int growSpeed = seed.GetComponent<itemInfo>().growSpeed();
 
         // Grow time is calculated to be turns = 5 - grow stat (1 turn ~ 3 months)
-        farm.GetComponent<farmInfo>().growTime = 5 - vals.Item2;
+        farm.GetComponent<farmInfo>().growTime = growSpeed;
         farm.GetComponent<Image>().sprite = plantedSprite;
         seed.GetComponent<Image>().color = new Color(255,255,255,0);
     }
@@ -355,7 +372,7 @@ public class GameManager : MonoBehaviour {
         if (child0.childCount == 0 || child1.childCount == 0) {
             Debug.Log("Two items needed to craft."); // TODO: replace with text bubble
             createPrintText(printPrefab, canvas, "Two items needed to craft.");
-            } else if (craftingOutput.transform.GetChild(1).childCount != 0 || items.Count >= INVENTORY_SIZE) {
+            } else if (craftingOutput.transform.GetChild(1).childCount != 0 || items.Count + plantedItems >= INVENTORY_SIZE) {
             Debug.Log("Crafted box full"); // TODO: replace with text bubble
             createPrintText(printPrefab, canvas, "Crafting box full.");
         } else {
@@ -366,28 +383,33 @@ public class GameManager : MonoBehaviour {
                 return;
             } else {
                 setMoney(money - craftPrice);
-                craftPrice += 100;
+                craftPrice += CRAFT_PRICE_INCREASE;
             }
 
             GameObject item = setupItem(itemPrefab, craftingOutput.transform.GetChild(1).gameObject);
             item.GetComponent<Image>().sprite = itemSprites[Mathf.FloorToInt(Random.Range(0, itemSprites.Count)) % (itemSprites.Count)]; // TODO: Somehow set a sprite
 
             // Adds all of the needed elements from the parent (generation, quantity, grow rate, resistance)
-            bool mutation = item.GetComponent<itemInfo>().createNewSeed(child0.GetChild(0).gameObject, child1.GetChild(0).gameObject);
-            if (mutation) { // TODO: Edit mutation to print what changed when mutation occurs
-                Debug.Log("A mutation occured"); // TODO: replace with something else to show a mutation occured
-                createPrintText(printPrefab, canvas, "A mutation occured.");
-            }
+            item.GetComponent<itemInfo>().createNewSeed(child0.GetChild(0).gameObject, child1.GetChild(0).gameObject);
+            (string, string, string) vals = item.GetComponent<itemInfo>().getStrings();
+            string printStr = "A " + vals.Item1 + " " + vals.Item2 + " flower was made with " + vals.Item3 + ".";
+            //Debug.Log(printStr); // TODO: replace with something else to show a mutation occured
+            createPrintText(printPrefab, canvas, printStr);
             items.Add(item);
 
             // Reports seed to analytics
-            ReportCraft("p1", item.GetComponent<itemInfo>().getValues(), turnNumber, money);
+            itemInfo iInfo = item.GetComponent<itemInfo>();
+            (int, int, int) values = item.GetComponent<itemInfo>().getValues();
+
+            ReportCraft("p1", values, items.Count, turnNumber, money);
         }
     }
 
     public bool isInvSpace() {
-        if(INVENTORY_SIZE < items.Count) {
+
+        if(INVENTORY_SIZE < items.Count + plantedItems) {
             Debug.Log("No additional items can be added. Inventory is full.");
+            createPrintText(printPrefab, canvas, "No additional items can be added. Inventory is full.");
             return false;
         }
         return true;
@@ -457,40 +479,57 @@ public class GameManager : MonoBehaviour {
         turnNumber += 1;
 
         // Report state to analytics
-        int maxVal = 0;
         int numFarms = 0;
-        foreach(GameObject seed in items) {
-            (int, int, int) vals = seed.GetComponent<itemInfo>().getValues();
-            if(maxVal < vals.Item1 + vals.Item2 + vals.Item3) {
-                maxVal = vals.Item1 + vals.Item2 + vals.Item3;
-            }
-        }
         foreach(GameObject farmPlot in farms) {
             if(farmPlot.GetComponent<farmInfo>().plotOwned) {
                 numFarms += 1;
             }
         }
-        ReportPlayerState("p1", maxVal, turnNumber, money, numFarms);
+        ReportPlayerState("p1", items.Count, turnNumber, money, numFarms);
 
-        // TODO: Implement a screen transition which then shows the money made
-
+        // Reset turn vars
+        craftPrice = BASE_CRAFT_PRICE;
 
         // Check/decrease farms counters. If any at 0, harvest and set seed back in inventory
-        foreach(GameObject farmPlot in farms) {
+        foreach (GameObject farmPlot in farms) {
             if(farmPlot.GetComponent<farmInfo>().plotOwned && farmPlot.GetComponent<farmInfo>().growTime != -1) {
                 farmPlot.GetComponent<farmInfo>().growTime -= 1;
                 if(farmPlot.GetComponent<farmInfo>().growTime == 0) {
                     // set growtime to -1 and reset sprite
                     farmPlot.GetComponent<farmInfo>().growTime = -1;
                     farmPlot.GetComponent<Image>().sprite = ownedSprite;
+                    plantedItems -= 1;
 
-                    // Add money based on harvested crops
+                    // Add flowers based on harvested crops
                     Transform child = farmPlot.transform.parent.GetChild(1);
                     (int,int,int) vals = child.GetComponent<itemInfo>().getValues();
-                    setMoney(money + 100 * vals.Item3);
 
                     // Remove the seed and place into a spot
-                    if(emptyInventory.Count == 0) {
+                    if (emptyInventory.Count == 0) {
+                        Debug.Log("An inventory overflow error has occured");
+                        return;
+                    }
+
+                    // Gets first emptyInventory slot
+                    
+                    GameObject item = setupItem(flowerPrefab, emptyInventory[0].transform.gameObject);
+                    emptyInventory.RemoveAt(0);
+                    // TODO: set the sprite with correct new sprite
+                    // item.GetComponent<Image>().sprite = ;
+                    item.GetComponent<flowerInfo>().petalColor = vals.Item1;
+                    item.GetComponent<flowerInfo>().flowerHeight = vals.Item2;
+                    item.GetComponent<flowerInfo>().growSpeed = vals.Item3;
+
+                    // Gets the number from the grow speed (0->1;1->3;2->5)
+                    item.GetComponent<flowerInfo>().numRemaining = (vals.Item3 == 0) ? (1) : ((vals.Item3 == 1) ? (3) : (5));
+                    items.Add(item);
+
+                    // TODO: Make a flower object and add it to the inventory w/ number of flowers left
+
+
+
+                    // Remove the seed and place into a spot
+                    if (emptyInventory.Count == 0) {
                         Debug.Log("An inventory overflow error has occured");
                         return;
                     }
@@ -514,8 +553,8 @@ public class GameManager : MonoBehaviour {
 
         if (child0.childCount > 0 && child1.childCount > 0) { // Check squares, if both, populate whole table
             clearSquare();
-            (int, bool, int, bool) vals0 = getItemInfo(child0.GetChild(0), trait);
-            (int, bool, int, bool) vals1 = getItemInfo(child1.GetChild(0), trait);
+            (int, int) vals0 = getItemInfo(child0.GetChild(0), trait);
+            (int, int) vals1 = getItemInfo(child1.GetChild(0), trait);
             (string, string) strs0 = getReadableItemFormat(vals0, trait);
             (string, string) strs1 = getReadableItemFormat(vals1, trait);
             // Side vals
@@ -525,10 +564,10 @@ public class GameManager : MonoBehaviour {
             square.transform.GetChild(6).GetChild(0).GetComponent<TextMeshProUGUI>().text = strs0.Item2;
 
             // Center table vals
-            square.transform.GetChild(4).GetChild(0).GetComponent<TextMeshProUGUI>().text = getItemsTable(vals0.Item1, vals0.Item2, vals1.Item1, vals1.Item2, trait);
-            square.transform.GetChild(5).GetChild(0).GetComponent<TextMeshProUGUI>().text = getItemsTable(vals0.Item1, vals0.Item2, vals1.Item3, vals1.Item4, trait);
-            square.transform.GetChild(7).GetChild(0).GetComponent<TextMeshProUGUI>().text = getItemsTable(vals0.Item3, vals0.Item4, vals1.Item1, vals1.Item2, trait);
-            square.transform.GetChild(8).GetChild(0).GetComponent<TextMeshProUGUI>().text = getItemsTable(vals0.Item3, vals0.Item4, vals1.Item3, vals1.Item4, trait);
+            square.transform.GetChild(4).GetChild(0).GetComponent<TextMeshProUGUI>().text = getItemsTable(vals0.Item1, vals1.Item1, trait);
+            square.transform.GetChild(5).GetChild(0).GetComponent<TextMeshProUGUI>().text = getItemsTable(vals0.Item1, vals1.Item2, trait);
+            square.transform.GetChild(7).GetChild(0).GetComponent<TextMeshProUGUI>().text = getItemsTable(vals0.Item2, vals1.Item1, trait);
+            square.transform.GetChild(8).GetChild(0).GetComponent<TextMeshProUGUI>().text = getItemsTable(vals0.Item2, vals1.Item2, trait);
 
         } else if (child0.childCount > 0) { // If there is seed in space 1, then populate side
             clearSquare();
@@ -630,10 +669,10 @@ public class GameManager : MonoBehaviour {
         inventory.GetComponent<GridLayoutGroup>().cellSize = new Vector2(160, 154);
         moneyBlock.GetComponent<GridLayoutGroup>().cellSize = new Vector2(width/2, Mathf.FloorToInt(height * .1f));
         craftingInput.GetComponent<GridLayoutGroup>().cellSize = new Vector2(160, 154);
-        square.GetComponent<GridLayoutGroup>().cellSize = new Vector2(160, 154);
+        square.GetComponent<GridLayoutGroup>().cellSize = new Vector2(192, 180);
         square.GetComponent<GridLayoutGroup>().constraint = GridLayoutGroup.Constraint.FixedColumnCount;
         square.GetComponent<GridLayoutGroup>().constraintCount = 3;
-        squareTrait.GetComponent<GridLayoutGroup>().cellSize = new Vector2(160, 154);
+        squareTrait.GetComponent<GridLayoutGroup>().cellSize = new Vector2(383, 180);
         craftingOutput.GetComponent<GridLayoutGroup>().cellSize = new Vector2(160, 154);
         swapView.GetComponent<GridLayoutGroup>().cellSize = new Vector2(width/6, Mathf.FloorToInt(height * .1f));
         farm.GetComponent<GridLayoutGroup>().cellSize = new Vector2(160, 154);
@@ -670,9 +709,10 @@ public class GameManager : MonoBehaviour {
                 GameObject item = setupItem(itemPrefab, button);
                 item.GetComponent<Image>().sprite = itemSprites[i % (itemSprites.Count)];
                 item.GetComponent<itemInfo>().generation = 0;
-                item.GetComponent<itemInfo>().setResistance(initSeeds[i % initSeeds.Length].Item1, initSeeds[i % initSeeds.Length].Item2, initSeeds[i % initSeeds.Length].Item3, initSeeds[i % initSeeds.Length].Item4);
-                item.GetComponent<itemInfo>().setGrowthRate(initSeeds[(i + 1) % initSeeds.Length].Item1, initSeeds[(i + 1) % initSeeds.Length].Item2, initSeeds[(i + 1) % initSeeds.Length].Item3, initSeeds[(i + 1) % initSeeds.Length].Item4);
-                item.GetComponent<itemInfo>().setQuantity(initSeeds[(i + 2) % initSeeds.Length].Item1, initSeeds[(i + 2) % initSeeds.Length].Item2, initSeeds[(i + 2) % initSeeds.Length].Item3, initSeeds[(i + 2) % initSeeds.Length].Item4);
+
+                item.GetComponent<itemInfo>().petalColor = (initSeeds[i % 3].Item1, initSeeds[i % 3].Item2);
+                item.GetComponent<itemInfo>().flowerHeight = (initSeeds[(i+1) % 3].Item1, initSeeds[(i + 1) % 3].Item2);
+                item.GetComponent<itemInfo>().growQuality = (initSeeds[(i + 2) % 3].Item1, initSeeds[(i + 2) % 3].Item2);
                 
                 items.Add(item);
             } else {
@@ -703,6 +743,7 @@ public class GameManager : MonoBehaviour {
         craftButton1.name = "craftButton1";
 
         // Sets up punnet square (make empty spaces squares as well (maybe make 3 punnet squares?))
+
         GameObject emptySpace = setupButton(emptyImage, square); // Set up empty space
         GameObject squareButton0 = setupButton(inventoryButtonPrefab, square); // Sets up first row buttons
         GameObject squareButText0 = setupText(textPrefab, squareButton0, "zero");
@@ -712,24 +753,28 @@ public class GameManager : MonoBehaviour {
         GameObject squareButText2 = setupText(textPrefab, squareButton2, "two");
         GameObject square0 = setupButton(inventoryButtonPrefab, square);
         GameObject squareText0 = setupText(textPrefab, square0, "0");
+        squareText0.GetComponent<RectTransform>().sizeDelta = new Vector2(squareText0.GetComponent<RectTransform>().sizeDelta.x-17, squareText0.GetComponent<RectTransform>().sizeDelta.y);
         GameObject square1 = setupButton(inventoryButtonPrefab, square);
         GameObject squareText1 = setupText(textPrefab, square1, "1");
+        squareText1.GetComponent<RectTransform>().sizeDelta = squareText0.GetComponent<RectTransform>().sizeDelta;
         GameObject squareButton3 = setupButton(inventoryButtonPrefab, square); // Sets up thrid row buttons
         GameObject squareButText3 = setupText(textPrefab, squareButton3, "three");
         GameObject square2 = setupButton(inventoryButtonPrefab, square);
         GameObject squareText2 = setupText(textPrefab, square2, "2");
+        squareText2.GetComponent<RectTransform>().sizeDelta = squareText0.GetComponent<RectTransform>().sizeDelta;
         GameObject square3 = setupButton(inventoryButtonPrefab, square);
         GameObject squareText3 = setupText(textPrefab, square3, "3");
+        squareText3.GetComponent<RectTransform>().sizeDelta = squareText0.GetComponent<RectTransform>().sizeDelta;
 
         // Sets up the buttons to swap traits
         GameObject traitButton0 = setupButton(inventoryButtonPrefab, squareTrait);
-        GameObject traitButText0 = setupText(textPrefab, traitButton0, "Quantity");
+        GameObject traitButText0 = setupText(textPrefab, traitButton0, "Color");
         traitButton0.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().setTrait(0); });
         GameObject traitButton1 = setupButton(inventoryButtonPrefab, squareTrait);
-        GameObject traitButText1 = setupText(textPrefab, traitButton1, "Grow Rate");
+        GameObject traitButText1 = setupText(textPrefab, traitButton1, "Height");
         traitButton1.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().setTrait(1); });
         GameObject traitButton2 = setupButton(inventoryButtonPrefab, squareTrait);
-        GameObject traitButText2 = setupText(textPrefab, traitButton2, "Resistance");
+        GameObject traitButText2 = setupText(textPrefab, traitButton2, "Grow Type");
         traitButton2.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().setTrait(2); });
 
         // Sets up craft button and square where crafted items are placed

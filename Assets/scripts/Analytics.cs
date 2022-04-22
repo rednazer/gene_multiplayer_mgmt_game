@@ -14,8 +14,8 @@ public class Report
     public string eventKey;
     public string eventValue;
     public string userId;
-    public int bestSeedValue;
-    public int seedValue;
+    public int numSeeds;
+    public (int,int,int) seedTraits;
     public int turn;
     public int farms;
     public int money;
@@ -33,9 +33,10 @@ public static class Analytics
     private static readonly StreamWriter Writer = new(path, true);
 
     // Report seed value when craft occurs
-    public static void ReportCraft(string userId, (int, int, int)value, int pTurn, int money) {
+    public static void ReportCraft(string userId, (int, int, int)values, int seedCount, int pTurn, int money) {
         var report = new Report(userId, "CRAFT", "PlayerEvent") {
-            seedValue = value.Item1 + value.Item2 + value.Item3,
+            seedTraits = values,
+            numSeeds = seedCount,
             turn = pTurn
         };
         Writer.WriteLine(JsonUtility.ToJson(report));
@@ -43,9 +44,9 @@ public static class Analytics
     }
 
     // Reports Max state
-    public static void ReportPlayerState(string userId, int maxValue, int pTurn, int pMoney, int pFarms) {
+    public static void ReportPlayerState(string userId, int seedCount, int pTurn, int pMoney, int pFarms) {
         var report = new Report(userId, "STATE", "KeyFrame") {
-            bestSeedValue = maxValue,
+            numSeeds = seedCount,
             turn = pTurn,
             farms = pFarms
         };
