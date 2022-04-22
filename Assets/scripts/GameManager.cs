@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour {
     public GameObject inventoryButtonPrefab;
     public GameObject layoutPrefab;
     public GameObject itemPrefab;
+    public GameObject contractPrefab;
     public GameObject flowerPrefab;
     public GameObject farmPrefab;
     public List<Sprite> itemSprites;
@@ -46,6 +47,7 @@ public class GameManager : MonoBehaviour {
     public GameObject craftingOutput;
     public GameObject swapView;
     public GameObject farm;
+    public GameObject contracts;
 
     // Cursor follower
     GameObject cursorFollower;
@@ -405,6 +407,23 @@ public class GameManager : MonoBehaviour {
         }
     }
 
+    public void sellItem(GameObject item) {
+        if (popup != null) {
+            Destroy(popup);
+            popup = null;
+            selectedItem = null;
+            return;
+        }
+        if(selectedItem == null) {
+            Debug.Log("Drag an item to sell.");
+            createPrintText(printPrefab, canvas, "Drag an item to sell.");
+        } else {
+            if (true) {
+
+            }
+        }
+    }
+
     public bool isInvSpace() {
 
         if(INVENTORY_SIZE < items.Count + plantedItems) {
@@ -437,8 +456,11 @@ public class GameManager : MonoBehaviour {
         squareTrait.SetActive(true);
         craftingOutput.SetActive(true);
 
-    // Disable farm view
+        // Disable farm view
         farm.SetActive(false);
+
+        // Disable contract view
+        contracts.SetActive(false);
     }
 
     public void switchFarmView() {
@@ -465,13 +487,45 @@ public class GameManager : MonoBehaviour {
         square.SetActive(false);
         squareTrait.SetActive(false);
         craftingOutput.SetActive(false);
-        
+
+        // Disable contract view
+        contracts.SetActive(false);
     }
    
 
     private void setMoney(int value) {
         money = value;
         moneyBlock.transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().text = "$" + money;
+    }
+
+    private void switchContractView() {
+        if (popup != null) {
+            Destroy(popup);
+            popup = null;
+            selectedItem = null;
+            return;
+        } else if (selectedItem != null) {
+            Destroy(cursorFollower);
+            cursorFollower = null;
+            selectedItem = null;
+            return;
+        }
+        if (screenView == 2) {
+            return;
+        }
+        screenView = 2;
+
+        // Enable contract view
+        contracts.SetActive(true);
+
+        // Disable crafting
+        craftingInput.SetActive(false);
+        square.SetActive(false);
+        squareTrait.SetActive(false);
+        craftingOutput.SetActive(false);
+
+        // Disable farm view
+        farm.SetActive(false);
     }
 
     public void endTurn() {
@@ -645,6 +699,10 @@ public class GameManager : MonoBehaviour {
         farm.name = "farm";
         farm.transform.SetParent(canvas.transform);
 
+        contracts = Instantiate(layoutPrefab); // farm
+        contracts.name = "contracts";
+        contracts.transform.SetParent(canvas.transform);
+
         // Does bounds setup for the layout groups
         int width = Camera.main.pixelWidth;
         int height = Camera.main.pixelHeight;
@@ -663,6 +721,8 @@ public class GameManager : MonoBehaviour {
         layoutSetup(moneyBlock, Mathf.FloorToInt(width * .5f), 0, 0, Mathf.FloorToInt(height * .9f));
         // Farm
         layoutSetup(farm, Mathf.FloorToInt(width * .5f), 0, Mathf.FloorToInt(height * .1f), Mathf.FloorToInt(height * .1f));
+        // Contracts
+        layoutSetup(contracts, Mathf.FloorToInt(width * .5f), 0, Mathf.FloorToInt(height * .1f), Mathf.FloorToInt(height * .1f));
 
         // Adds additional constraints
         // inventory cell size -> x=160, y=154
@@ -674,8 +734,9 @@ public class GameManager : MonoBehaviour {
         square.GetComponent<GridLayoutGroup>().constraintCount = 3;
         squareTrait.GetComponent<GridLayoutGroup>().cellSize = new Vector2(383, 180);
         craftingOutput.GetComponent<GridLayoutGroup>().cellSize = new Vector2(160, 154);
-        swapView.GetComponent<GridLayoutGroup>().cellSize = new Vector2(width/6, Mathf.FloorToInt(height * .1f));
+        swapView.GetComponent<GridLayoutGroup>().cellSize = new Vector2(width/8, Mathf.FloorToInt(height * .1f));
         farm.GetComponent<GridLayoutGroup>().cellSize = new Vector2(160, 154);
+        contracts.GetComponent<GridLayoutGroup>().cellSize = new Vector2(500, 400);
 
         // Sets up buttons in inventory
         Debug.Log("Finished Layout setup");
@@ -688,6 +749,9 @@ public class GameManager : MonoBehaviour {
         swapViewSetup();
         Debug.Log("Finished Swap View Setup");
         farmSetup();
+        Debug.Log("Finished Farm View Setup");
+        contractSetup();
+        Debug.Log("Finished Contracts View Setup");
 
         hoverCursor = Instantiate(hoverPrefab, hoverPrefab.transform.position, hoverPrefab.transform.rotation);
         hoverCursor.transform.SetParent(canvas.transform);
@@ -789,20 +853,25 @@ public class GameManager : MonoBehaviour {
     }
 
     private void swapViewSetup() {
+        //Craft button
         GameObject craftingView = setupButton(inventoryButtonPrefab, swapView); // sets the parent to the inventory and the localScale to 1 (so it's not huge when it's made)
         craftingView.name = "craftingView";
         GameObject craftingViewText = setupText(textPrefab, craftingView, "Crafting View");
         craftingView.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().switchCraftView(); });
-        // Here add functionality
+        // Farm button
         GameObject farmInventoryButton = setupButton(inventoryButtonPrefab, swapView); // sets the parent to the inventory and the localScale to 1 (so it's not huge when it's made)
         farmInventoryButton.name = "farmViewButton";
         GameObject farmInventoryText = setupText(textPrefab, farmInventoryButton, "Farm View");
         farmInventoryButton.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().switchFarmView(); });
-        // Here add functionality
+        // Contracts button
+        GameObject contractsButton = setupButton(inventoryButtonPrefab, swapView);
+        contractsButton.name = "contractsButton";
+        GameObject contractInventoryText = setupText(textPrefab, contractsButton, "Contract View");
+        contractsButton.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().switchContractView(); });
+        // End turn button
         GameObject endTurnButton = setupButton(inventoryButtonPrefab, swapView); // sets the parent to the inventory and the localScale to 1 (so it's not huge when it's made)
         endTurnButton.name = "endTurnButton";
         GameObject endTurnText = setupText(textPrefab, endTurnButton, "End Turn");
-        // Here add functionality
         endTurnButton.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().endTurn(); });
         
     }
@@ -832,11 +901,14 @@ public class GameManager : MonoBehaviour {
         farm.SetActive(false);
     }
 
-    // Sets up the store (the store doesn't need setup. It will be a like a button)
-    // fertilizer
-    // greenhouse
-    // new seeds?
-    private void storeSetup() {
-        
+    private void contractSetup() {
+        // Make initial buttons (sell seed, sell flower)
+        GameObject sellSeedButton = setupButton(inventoryButtonPrefab, contracts);
+        sellSeedButton.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().sellItem(sellSeedButton); });
+        GameObject sellSeedContract = setupItem(contractPrefab, sellSeedButton);
+        GameObject sellSeedText = setupText(textPrefab, sellSeedButton, "Sell seed");
+
+        contracts.SetActive(false);
     }
+
 }
