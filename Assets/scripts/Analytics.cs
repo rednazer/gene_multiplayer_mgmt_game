@@ -14,11 +14,11 @@ public class Report
     public string eventKey;
     public string eventValue;
     public string userId;
-    public int numSeeds;
+    public int seedsCrafted;
     public (int,int,int) seedTraits;
     public int turn;
     public int farms;
-    public int money;
+    public int currentMoney;
     public Report(string userId, string eventKey, string eventValue)
     {
         this.userId = userId;
@@ -29,15 +29,16 @@ public class Report
 
 public static class Analytics
 {
-    private const string path = "Assets/Logs/userLog.json";
-    private static readonly StreamWriter Writer = new(path, true);
+    private const string path = "userLog.json"; // Changd the log location for the build "Assets/Logs/userLog.json";
+    private static readonly StreamWriter Writer = new StreamWriter(path, true);
 
     // Report seed value when craft occurs
     public static void ReportCraft(string userId, (int, int, int)values, int seedCount, int pTurn, int money) {
         var report = new Report(userId, "CRAFT", "PlayerEvent") {
             seedTraits = values,
-            numSeeds = seedCount,
-            turn = pTurn
+            seedsCrafted = seedCount,
+            turn = pTurn,
+            currentMoney = money
         };
         Writer.WriteLine(JsonUtility.ToJson(report));
         Writer.Flush();
@@ -46,8 +47,9 @@ public static class Analytics
     // Reports Max state
     public static void ReportPlayerState(string userId, int seedCount, int pTurn, int pMoney, int pFarms) {
         var report = new Report(userId, "STATE", "KeyFrame") {
-            numSeeds = seedCount,
+            seedsCrafted = seedCount,
             turn = pTurn,
+            currentMoney = pMoney,
             farms = pFarms
         };
         Writer.WriteLine(JsonUtility.ToJson(report));

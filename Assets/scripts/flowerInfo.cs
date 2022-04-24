@@ -35,7 +35,7 @@ public class flowerInfo : MonoBehaviour
 
         if(growSpeed == 0) {
             textInfo += "fast growing ";
-        } else if(growSpeed == 0) {
+        } else if(growSpeed == 1) {
             textInfo += "mixed yield/growth ";
         } else {
             textInfo += "high yielding ";
