@@ -151,7 +151,6 @@ public class GameManager : MonoBehaviour {
     }
 
     void hostGame() {
-        NetworkManager.Singleton.ConnectionApprovalCallback += ApprovalCheck;
         NetworkManager.Singleton.StartHost();
         networkPlayer = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
         Debug.Log("host");
@@ -159,15 +158,13 @@ public class GameManager : MonoBehaviour {
 
     void clientGame() {
         Debug.Log("join");
-        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes("placeholder");
-        NetworkManager.Singleton.ConnectionApprovalCallback += ApprovalCheck;
         NetworkManager.Singleton.StartClient();
     }
 
     [SerializeField] GraphicRaycaster m_Raycaster;
     PointerEventData m_PointerEventData;
     [SerializeField] EventSystem m_EventSystem;
-
+    /*
     private void ApprovalCheck(byte[] connectionData, ulong clientId, NetworkManager.ConnectionApprovedDelegate callback) {
         bool approval = false;
         bool createPlayerObj = false;
@@ -177,7 +174,7 @@ public class GameManager : MonoBehaviour {
         }
 
         callback(createPlayerObj, null, approval, null, null);
-    }
+    }*/
 
    private void StartLocalGame() {
         Debug.Log("starting game");
