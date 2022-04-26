@@ -684,7 +684,7 @@ PrefabInstance:
       objectReference: {fileID: 2131548771}
     - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
       propertyPath: debugMode
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
       propertyPath: emptyImage

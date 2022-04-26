@@ -587,6 +587,7 @@ public class GameManager : MonoBehaviour {
     }
 
     private bool soldThisTurn;
+    private float soldTimer = .4f;
 
     private void sellFlower(GameObject item) {
         // Decrements the contract/makes new contract is empty
@@ -598,7 +599,9 @@ public class GameManager : MonoBehaviour {
             // If not the server, sends a BuyFlower request to the server
             var obj = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
             obj.GetComponent<networkScript>().BuyFlower(item.transform.GetChild(0).GetComponent<contractInfo>().number);
+            Debug.Log("sellflower");
             soldThisTurn = true;
+            soldTimer = .4f;
         }
     }
 
@@ -614,7 +617,6 @@ public class GameManager : MonoBehaviour {
             } else if(client.contract2Remaining.Value < host.contract2Remaining.Value) {
                 host.contract2Remaining.Value -= 1;
                 contracts.transform.GetChild(3).GetChild(0).GetComponent<contractInfo>().remaining -= 1;
-                
                 contracts.transform.GetChild(3).GetChild(1).GetComponent<TextMeshProUGUI>().text = setContractText(contracts.transform.GetChild(3).GetChild(0).GetComponent<contractInfo>());
             } else if(client.contract3Remaining.Value < host.contract3Remaining.Value) {
                 host.contract2Remaining.Value -= 1;
@@ -623,7 +625,7 @@ public class GameManager : MonoBehaviour {
                 contracts.transform.GetChild(4).GetChild(1).GetComponent<TextMeshProUGUI>().text = setContractText(contracts.transform.GetChild(4).GetChild(0).GetComponent<contractInfo>());
             }
             if (host.contract1Remaining.Value <= 0) {
-                // Create new contract (for contract 2)
+                // Create new contract (for contract 1)
                 createNewContract(1);
             }
             if (host.contract2Remaining.Value <= 0) {
@@ -631,7 +633,7 @@ public class GameManager : MonoBehaviour {
                 createNewContract(2);
             }
             if (host.contract3Remaining.Value <= 0) {
-                // Create new contract (for contract 2)
+                // Create new contract (for contract 3)
                 createNewContract(3);
             }
         } else {
@@ -640,6 +642,12 @@ public class GameManager : MonoBehaviour {
                 client.SetContractInfoServerRpc(1, host.contract1Remaining.Value, host.contract1Price.Value, host.contract1PetalColor.Value, host.contract1FlowerHeight.Value, host.contract1GrowSpeed.Value);
                 client.SetContractInfoServerRpc(2, host.contract2Remaining.Value, host.contract2Price.Value, host.contract2PetalColor.Value, host.contract2FlowerHeight.Value, host.contract2GrowSpeed.Value);
                 client.SetContractInfoServerRpc(3, host.contract3Remaining.Value, host.contract3Price.Value, host.contract3PetalColor.Value, host.contract3FlowerHeight.Value, host.contract3GrowSpeed.Value);
+            } else {
+                soldTimer -= Time.deltaTime;
+                if(soldTimer < 0) { 
+                    soldThisTurn = false;
+                }
+                Debug.Log("did not update this turn");
             }
             // Update in-game info
             networkScript hostScript = GameObject.Find("networkPlayerHost").GetComponent<networkScript>();
