@@ -5,6 +5,8 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
 using Unity.Netcode;
+using Unity.Netcode.Transports.UNET;
+
 using static managerHelper;
 using static Analytics;
 using System.Text;
@@ -21,9 +23,10 @@ public class GameManager : MonoBehaviour {
             _instance = this;
         }
     }
-
+    
     // Initial startup setup
     public GameObject startButtonPrefab;
+    public GameObject clientConnectPrefab;
     public GameObject canvas; // Holds the canvas of the screen
     static public NetworkObject networkPlayer;
     private bool atMainMenu;
@@ -127,14 +130,20 @@ public class GameManager : MonoBehaviour {
         hostButton.GetComponent<Button>().transition = Selectable.Transition.ColorTint;
         hostButton.GetComponent<Button>().colors = buttonColors;
 
+        GameObject clientConnect = Instantiate(clientConnectPrefab);
+        clientConnect.transform.SetParent(canvas.transform, false);
+        clientConnect.transform.position = new Vector3(0, -1f);
+
         GameObject clientButton = Instantiate(startButtonPrefab);
         clientButton.name = "clientButton";
         clientButton.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = "Join game";
-        clientButton.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().clientGame(); });
+        clientButton.GetComponent<Button>().onClick.AddListener(delegate { gameObject.GetComponent<GameManager>().clientGame(clientConnect); });
         clientButton.transform.SetParent(canvas.transform, false);
         clientButton.transform.position = new Vector3(0, -.5f);
         clientButton.GetComponent<Button>().transition = Selectable.Transition.ColorTint;
         clientButton.GetComponent<Button>().colors = buttonColors;
+
+
 
         // Setup event system vars for raycasts
         //Fetch the Raycaster from the GameObject (the Canvas)
@@ -155,10 +164,17 @@ public class GameManager : MonoBehaviour {
         networkPlayer = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
         Debug.Log("host");
     }
+    
 
-    void clientGame() {
+    void clientGame(GameObject clientConnect) {
         Debug.Log("join");
-        NetworkManager.Singleton.StartClient();
+        string text = clientConnect.transform.GetChild(0).GetChild(2).GetComponent<TextMeshProUGUI>().text;
+        if(text == "") {
+            NetworkManager.Singleton.GetComponent<UNetTransport>().ConnectAddress = "127.0.0.1";
+        } else {
+            NetworkManager.Singleton.GetComponent<UNetTransport>().ConnectAddress = text;
+        }
+        //NetworkManager.Singleton.StartClient();
     }
 
     [SerializeField] GraphicRaycaster m_Raycaster;

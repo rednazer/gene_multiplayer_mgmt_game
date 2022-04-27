@@ -684,7 +684,7 @@ PrefabInstance:
       objectReference: {fileID: 2131548771}
     - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
       propertyPath: debugMode
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
       propertyPath: emptyImage
@@ -778,6 +778,10 @@ PrefabInstance:
       propertyPath: startButtonPrefab
       value: 
       objectReference: {fileID: 9151865807274665629, guid: 07f36d607926e5b46b1e7c54e4bb009e, type: 3}
+    - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
+      propertyPath: clientConnectPrefab
+      value: 
+      objectReference: {fileID: 2965181046691932928, guid: da9d4e18600cf334f8dae108dfe37357, type: 3}
     - target: {fileID: 3652200979546960571, guid: d8b0c61a06cf10343a46c17fe13cf98e, type: 3}
       propertyPath: cursorFollowerPrefab
       value: 

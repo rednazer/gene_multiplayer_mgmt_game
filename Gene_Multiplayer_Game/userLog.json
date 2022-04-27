@@ -1,0 +1,7 @@
+{"version":"0.0.6","datetime":"2022-04-26 18:50:03","epoch":1651017003715.0,"eventKey":"STATE","eventValue":"KeyFrame","userId":"0","seedsCrafted":0,"turn":0,"farms":0,"currentMoney":0}
+{"version":"0.0.6","datetime":"2022-04-26 20:22:41","epoch":1651022561453.0,"eventKey":"CRAFT","eventValue":"PlayerEvent","userId":"0","seedsCrafted":1,"turn":1,"farms":0,"currentMoney":200}
+{"version":"0.0.6","datetime":"2022-04-26 20:25:25","epoch":1651022725947.0,"eventKey":"CRAFT","eventValue":"PlayerEvent","userId":"0","seedsCrafted":2,"turn":1,"farms":0,"currentMoney":150}
+{"version":"0.0.6","datetime":"2022-04-26 20:34:20","epoch":1651023260706.0,"eventKey":"CRAFT","eventValue":"PlayerEvent","userId":"0","seedsCrafted":3,"turn":1,"farms":0,"currentMoney":50}
+{"version":"0.0.6","datetime":"2022-04-26 20:44:00","epoch":1651023840300.0,"eventKey":"STATE","eventValue":"KeyFrame","userId":"0","seedsCrafted":3,"turn":2,"farms":4,"currentMoney":50}
+{"version":"0.0.6","datetime":"2022-04-26 20:46:42","epoch":1651024002463.0,"eventKey":"STATE","eventValue":"KeyFrame","userId":"0","seedsCrafted":3,"turn":3,"farms":4,"currentMoney":50}
+{"version":"0.0.6","datetime":"2022-04-26 20:49:51","epoch":1651024191910.0,"eventKey":"STATE","eventValue":"KeyFrame","userId":"0","seedsCrafted":3,"turn":4,"farms":4,"currentMoney":50}
