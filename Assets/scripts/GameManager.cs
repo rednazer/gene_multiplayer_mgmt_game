@@ -90,6 +90,7 @@ public class GameManager : MonoBehaviour {
 
     // Other
     [SerializeField] int money;
+    int moneyThisTurn;
     int screenView;
     [SerializeField] int turnNumber;
     GameObject endTurnBut;
@@ -119,7 +120,7 @@ public class GameManager : MonoBehaviour {
 
 
             // Tests making a log file and writing to it
-            ReportPlayerState("0", 0, 0, 0, 0);
+            ReportPlayerState("0", 0, 0, 0, 0, 0);
         }
         GameObject hostButton = Instantiate(startButtonPrefab);
         hostButton.name = "hostButton";
@@ -174,7 +175,8 @@ public class GameManager : MonoBehaviour {
         } else {
             NetworkManager.Singleton.GetComponent<UNetTransport>().ConnectAddress = text;
         }
-        //NetworkManager.Singleton.StartClient();
+
+        NetworkManager.Singleton.StartClient();
     }
 
     [SerializeField] GraphicRaycaster m_Raycaster;
@@ -399,6 +401,10 @@ public class GameManager : MonoBehaviour {
                 Destroy(cursorFollower);
                 cursorFollower = null;
                 selectedItem = null;
+
+                (int, int, int) values = child.GetComponent<itemInfo>().getValues();
+
+                ReportPlant("" + NetworkManager.Singleton.LocalClientId, values, seedsCrafted, turnNumber, money);
             }
         }
     }
@@ -423,6 +429,15 @@ public class GameManager : MonoBehaviour {
                 setMoney(money - FARM_PRICE);
                 selectedItem.transform.GetChild(0).GetComponent<Image>().sprite = ownedSprite;
                 selectedItem.transform.GetChild(0).GetComponent<farmInfo>().plotOwned = true;
+
+                int numFarms = 0;
+                foreach (GameObject farmPlot in farms) {
+                    if (farmPlot.GetComponent<farmInfo>().plotOwned) {
+                        numFarms += 1;
+                    }
+                }
+
+                ReportBuyFarm("" + NetworkManager.Singleton.LocalClientId, seedsCrafted, turnNumber, money, numFarms);
             }
         } else if(shopType == 1) { // Buy greenhouse on farm plot
             // removed greenhouse as a shop item
@@ -503,7 +518,7 @@ public class GameManager : MonoBehaviour {
             itemInfo iInfo = item.GetComponent<itemInfo>();
             (int, int, int) values = item.GetComponent<itemInfo>().getValues();
 
-            if (NetworkManager.Singleton.IsServer) {
+            if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.GetComponent<UNetTransport>().ConnectAddress != "127.0.0.1") {
                 ReportCraft(""+NetworkManager.Singleton.LocalClientId, values, seedsCrafted, turnNumber, money);
             }
         }
@@ -530,6 +545,8 @@ public class GameManager : MonoBehaviour {
                     Destroy(child);
                     selectedItem = null;
                     setMoney(money + item.transform.GetChild(0).GetComponent<contractInfo>().price);
+                    moneyThisTurn += item.transform.GetChild(0).GetComponent<contractInfo>().price;
+                    ReportSellFlower("" + NetworkManager.Singleton.LocalClientId, seedsCrafted, turnNumber, money, item.transform.GetChild(0).GetComponent<contractInfo>().price, 0);
                 } else {
                     Debug.Log("this is a flower, not a seed");
                     createPrintText(printPrefab, canvas, "this is a flower, not a seed");
@@ -552,6 +569,8 @@ public class GameManager : MonoBehaviour {
                             selectedItem = null;
                         }
                         setMoney(money + item.transform.GetChild(0).GetComponent<contractInfo>().price);
+                        moneyThisTurn += item.transform.GetChild(0).GetComponent<contractInfo>().price;
+                        ReportSellFlower("" + NetworkManager.Singleton.LocalClientId, seedsCrafted, turnNumber, money, item.transform.GetChild(0).GetComponent<contractInfo>().price, 1);
                         return;
                     }
 
@@ -583,6 +602,8 @@ public class GameManager : MonoBehaviour {
                     fInfo.numRemaining -= 1;
                     cInfo.remaining -= 1;
                     setMoney(money + item.transform.GetChild(0).GetComponent<contractInfo>().price);
+                    moneyThisTurn += item.transform.GetChild(0).GetComponent<contractInfo>().price;
+                    ReportSellFlower("" + NetworkManager.Singleton.LocalClientId, seedsCrafted, turnNumber, money, item.transform.GetChild(0).GetComponent<contractInfo>().price, item.transform.GetChild(0).GetComponent<contractInfo>().number + 1);
                     GameObject child2 = selectedItem.transform.GetChild(0).gameObject;
                     if (fInfo.numRemaining <= 0) {
                         emptyInventory.Add(selectedItem);
@@ -869,9 +890,11 @@ public class GameManager : MonoBehaviour {
             }
         }
 
-        if (NetworkManager.Singleton.IsServer) {
-            ReportPlayerState("" + NetworkManager.Singleton.LocalClientId, seedsCrafted, turnNumber, money, numFarms);
+        if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.GetComponent<UNetTransport>().ConnectAddress != "127.0.0.1") {
+            ReportPlayerState("" + NetworkManager.Singleton.LocalClientId, seedsCrafted, turnNumber, money, moneyThisTurn, numFarms);
         }
+
+        moneyThisTurn = 0;
 
         // Reset turn vars
         craftPrice = BASE_CRAFT_PRICE;
@@ -1004,6 +1027,7 @@ public class GameManager : MonoBehaviour {
 
         screenView = 0;
         turnNumber = 1;
+        moneyThisTurn = 0;
 
         // Add things to new scene
         buildGameScene();

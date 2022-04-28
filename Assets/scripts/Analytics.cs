@@ -18,7 +18,10 @@ public class Report
     public (int,int,int) seedTraits;
     public int turn;
     public int farms;
+    public int contract;
+    public int price;
     public int currentMoney;
+    public int moneyPerTurn;
     public Report(string userId, string eventKey, string eventValue)
     {
         this.userId = userId;
@@ -44,60 +47,55 @@ public static class Analytics
         Writer.Flush();
     }
 
-    // Reports Max state
-    public static void ReportPlayerState(string userId, int seedCount, int pTurn, int pMoney, int pFarms) {
-        var report = new Report(userId, "STATE", "KeyFrame") {
+    // Reports when planting a seed
+    public static void ReportPlant(string userId, (int, int, int) values, int seedCount, int pTurn, int money) {
+        var report = new Report(userId, "PLANT", "PlayerEvent") {
+            seedTraits = values,
             seedsCrafted = seedCount,
             turn = pTurn,
-            currentMoney = pMoney,
+            currentMoney = money
+        };
+        Writer.WriteLine(JsonUtility.ToJson(report));
+        Writer.Flush();
+    }
+
+    // Reports when buying a farm
+    public static void ReportBuyFarm(string userId, int seedCount, int pTurn, int money, int pFarms) {
+        var report = new Report(userId, "BUYFARM", "PlayerEvent") {
+            seedsCrafted = seedCount,
+            turn = pTurn,
+            currentMoney = money,
             farms = pFarms
         };
         Writer.WriteLine(JsonUtility.ToJson(report));
         Writer.Flush();
     }
 
+    // Reports when selling a flower
+    public static void ReportSellFlower(string userId, int seedCount, int pTurn, int money, int cPrice, int contractNum) {
+        var report = new Report(userId, "PLANT", "PlayerEvent") {
+            seedsCrafted = seedCount,
+            turn = pTurn,
+            currentMoney = money,
+            price = cPrice,
+            contract = contractNum
+        };
+        Writer.WriteLine(JsonUtility.ToJson(report));
+        Writer.Flush();
+    }
 
-    /*
-    public static void ReportEvent(string userId, string eventKey, string eventValue)
-    {
-        Writer.WriteLine(JsonUtility.ToJson(new Report(userId, eventKey, eventValue)));
-        Writer.Flush();
-    }
-    
-    public static void ReportMove(string userId, Vector3Int pDelta, Vector3Int[] pBoard, Vector3Int[] pPiece)
-    {
-        var report = new Report(userId, "MOVE", "PlayerEvent")
-        {
-            delta = pDelta,
-            board = pBoard,
-            piece = pPiece
+    // Reports Max state
+    public static void ReportPlayerState(string userId, int seedCount, int pTurn, int pMoney, int turnMoney, int pFarms) {
+        var report = new Report(userId, "STATE", "KeyFrame") {
+            seedsCrafted = seedCount,
+            turn = pTurn,
+            currentMoney = pMoney,
+            moneyPerTurn = turnMoney,
+            farms = pFarms
         };
         Writer.WriteLine(JsonUtility.ToJson(report));
         Writer.Flush();
     }
-    
-    public static void ReportRotate(string userId, Vector3Int[] pBoard, Vector3Int[] pPiece)
-    {
-        var report = new Report(userId, "ROTATE", "PlayerEvent")
-        {
-            board = pBoard,
-            piece = pPiece
-        };
-        Writer.WriteLine(JsonUtility.ToJson(report));
-        Writer.Flush();
-    }
-    
-    public static void ReportState(string userId, Vector3Int[] pBoard, Vector3Int[] pPiece)
-    {
-        var report = new Report(userId, "STATE", "KeyFrame")
-        {
-            board = pBoard,
-            piece = pPiece
-        };
-        Writer.WriteLine(JsonUtility.ToJson(report));
-        Writer.Flush();
-    }
-    */
 
     public static void Close() => Writer.Close();
 }
