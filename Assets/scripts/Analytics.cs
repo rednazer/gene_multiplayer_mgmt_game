@@ -73,7 +73,7 @@ public static class Analytics
 
     // Reports when selling a flower
     public static void ReportSellFlower(string userId, int seedCount, int pTurn, int money, int cPrice, int contractNum) {
-        var report = new Report(userId, "PLANT", "PlayerEvent") {
+        var report = new Report(userId, "SELLFLOWER", "PlayerEvent") {
             seedsCrafted = seedCount,
             turn = pTurn,
             currentMoney = money,
