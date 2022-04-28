@@ -395,7 +395,7 @@ public class GameManager : MonoBehaviour {
                 createPrintText(printPrefab, canvas, "You do not own this plot.");
             } else { // Plants seed
                 if (!isInvSpace()) {
-                    return;
+                    // removed inventory check cause there is a different bug which makes it not matter anyways
                 }
                 plantedItems += 1;
                 GameObject child = selectedItem.transform.GetChild(0).gameObject;
@@ -483,7 +483,7 @@ public class GameManager : MonoBehaviour {
 
         // Checks for inventory space
         if(!isInvSpace()) {
-            return;
+            // removed inventory check cause there is a different bug which makes it not matter anyways
         }
 
         // Use seeds from parents
@@ -492,7 +492,8 @@ public class GameManager : MonoBehaviour {
         if (child0.childCount == 0 || child1.childCount == 0) {
             Debug.Log("Two items needed to craft."); // TODO: replace with text bubble
             createPrintText(printPrefab, canvas, "Two items needed to craft.");
-            } else if (craftingOutput.transform.GetChild(1).childCount != 0 || items.Count + plantedItems >= INVENTORY_SIZE) {
+        } else if (craftingOutput.transform.GetChild(1).childCount != 0 /*|| items.Count + plantedItems >= INVENTORY_SIZE*/) {
+            // removed inventory check cause there is a different bug which makes it not matter anyways
             Debug.Log("Crafted box full"); // TODO: replace with text bubble
             createPrintText(printPrefab, canvas, "Crafting box full.");
         } else {
