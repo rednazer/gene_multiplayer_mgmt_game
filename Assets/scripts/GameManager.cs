@@ -170,15 +170,15 @@ public class GameManager : MonoBehaviour {
     void clientGame(GameObject clientConnect) {
         Debug.Log("join");
         string text = clientConnect.transform.GetChild(0).GetChild(2).GetComponent<TextMeshProUGUI>().text;
-        Debug.Log(text);
-        Debug.Log("192.168.1.94");
-        Debug.Log(text=="192.168.1.94");
+        //Debug.Log(text.Trim());
+        //Debug.Log("192.168.1.94");
+        //Debug.Log(text.Trim()=="192.168.1.94");
 
 
         if (text.Length < 2) { // THIS IS PAIN
             //NetworkManager.Singleton.GetComponent<UNetTransport>().ConnectAddress = "127.0.0.1";
         } else {
-            //NetworkManager.Singleton.GetComponent<UNetTransport>().ConnectAddress = text;
+            NetworkManager.Singleton.GetComponent<UNetTransport>().ConnectAddress = text;
         }
 
         NetworkManager.Singleton.StartClient();
